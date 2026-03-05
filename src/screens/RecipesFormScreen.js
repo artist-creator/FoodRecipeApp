@@ -1,90 +1,164 @@
-import { View,Text,TextInput,TouchableOpacity,Image,StyleSheet,} from "react-native";
 import React, { useState } from "react";
+import {
+View,
+Text,
+TextInput,
+TouchableOpacity,
+StyleSheet,
+Image
+} from "react-native";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {widthPercentageToDP as wp,heightPercentageToDP as hp,} from "react-native-responsive-screen";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
-export default function RecipesFormScreen({ route, navigation }) {
-  const { recipeToEdit, recipeIndex, onrecipeEdited } = route.params || {};
-  const [title, setTitle] = useState(recipeToEdit ? recipeToEdit.title : "");
-  const [image, setImage] = useState(recipeToEdit ? recipeToEdit.image : "");
-  const [description, setDescription] = useState(
-    recipeToEdit ? recipeToEdit.description : ""
-  );
+export default function RecipesFormScreen(){
 
-  const saverecipe = async () => {
- 
-  };
+const navigation = useNavigation();
+const route = useRoute();
 
-  return (
-    <View style={styles.container}>
-      <TextInput
-        placeholder="Title"
-        value={title}
-        onChangeText={setTitle}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Image URL"
-        value={image}
-        onChangeText={setImage}
-        style={styles.input}
-      />
-      {image ? (
-        <Image source={{ uri: image }} style={styles.image} />
-      ) : (
-        <Text style={styles.imagePlaceholder}>Upload Image URL</Text>
-      )}
-      <TextInput
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline={true}
-        numberOfLines={4}
-        style={[styles.input, { height: hp(20), textAlignVertical: "top" }]}
-      />
-      <TouchableOpacity onPress={saverecipe} style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Save recipe</Text>
-      </TouchableOpacity>
-    </View>
-  );
+const { recipeToEdit, recipeIndex, onrecipeEdited } = route.params || {};
+
+const [title,setTitle] = useState(recipeToEdit ? recipeToEdit.title : "");
+const [image,setImage] = useState(recipeToEdit ? recipeToEdit.image : "");
+const [description,setDescription] = useState(
+recipeToEdit ? recipeToEdit.description : ""
+);
+
+const saverecipe = async () => {
+
+try{
+
+const newrecipe = {
+title,
+image,
+description
+};
+
+const storedrecipes = await AsyncStorage.getItem("customrecipes");
+
+let recipes = storedrecipes ? JSON.parse(storedrecipes) : [];
+
+if(recipeToEdit){
+
+recipes[recipeIndex] = newrecipe;
+
+if(onrecipeEdited){
+onrecipeEdited();
+}
+
+}else{
+
+recipes.push(newrecipe);
+
+}
+
+await AsyncStorage.setItem(
+"customrecipes",
+JSON.stringify(recipes)
+);
+
+navigation.goBack();
+
+}catch(error){
+
+console.log("Error saving recipe:",error);
+
+}
+
+};
+
+return(
+
+<View style={styles.container}>
+
+<TextInput
+placeholder="Recipe Title"
+value={title}
+onChangeText={setTitle}
+style={styles.input}
+/>
+
+<TextInput
+placeholder="Image URL"
+value={image}
+onChangeText={setImage}
+style={styles.input}
+/>
+
+{image ? (
+<Image
+source={{uri:image}}
+style={styles.preview}
+/>
+) : (
+<Text>Upload Image URL</Text>
+)}
+
+<TextInput
+placeholder="Description"
+value={description}
+onChangeText={setDescription}
+multiline
+style={styles.textarea}
+/>
+
+<TouchableOpacity
+onPress={saverecipe}
+style={styles.button}
+>
+
+<Text style={styles.buttonText}>
+Save Recipe
+</Text>
+
+</TouchableOpacity>
+
+</View>
+
+);
+
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: wp(4),
-  },
-  input: {
-    marginTop: hp(4),
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: wp(.5),
-    marginVertical: hp(1),
-  },
-  image: {
-    width: 300,
-    height:200,
-    margin: wp(2),
-  },
-  imagePlaceholder: {
-    height: hp(20),
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: hp(1),
-    borderWidth: 1,
-    borderColor: "#ddd",
-    textAlign: "center",
-    padding: wp(2),
-  },
-  saveButton: {
-    backgroundColor: "#4F75FF",
-    padding: wp(.5),
-    alignItems: "center",
-    borderRadius: 5,
-    marginTop: hp(2),
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+
+container:{
+flex:1,
+padding:20
+},
+
+input:{
+borderWidth:1,
+borderColor:"#ccc",
+padding:10,
+marginBottom:10,
+borderRadius:10
+},
+
+textarea:{
+borderWidth:1,
+borderColor:"#ccc",
+padding:10,
+height:100,
+marginBottom:10,
+borderRadius:10
+},
+
+preview:{
+width:"100%",
+height:200,
+borderRadius:10,
+marginBottom:10
+},
+
+button:{
+backgroundColor:"#fbbf24",
+padding:15,
+alignItems:"center",
+borderRadius:10
+},
+
+buttonText:{
+fontWeight:"bold"
+}
+
 });
